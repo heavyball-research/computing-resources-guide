@@ -24,6 +24,11 @@ run_commands:
   # sglang env
   - /root/miniconda3/bin/conda create -n sglang python=3.12 -y
   - /root/miniconda3/envs/sglang/bin/pip install sglang
+  # Node.js + Codex CLI
+  - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+  - apt-get install -y nodejs
+  - npm install -g npm@11.14.1
+  - npm install -g @openai/codex
   - echo 'source /root/miniconda3/etc/profile.d/conda.sh' >> /root/.bashrc
   - echo 'conda activate sglang' >> /root/.bashrc
   - echo 'source /root/.bashrc' >> /root/.profile

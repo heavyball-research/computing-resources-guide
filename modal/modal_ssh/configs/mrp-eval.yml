@@ -56,6 +56,11 @@ run_commands:
   - cd /root/mrp-dev/src/eval/opencompass && /root/miniconda3/envs/opencompass/bin/pip install -e .
   # nohup-queue helper
   - cd /root && git clone https://github.com/Zephyr271828/nohup-queue.git && /root/miniconda3/envs/opencompass/bin/pip install -e /root/nohup-queue
+  # Node.js + Codex CLI
+  - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+  - apt-get install -y nodejs
+  - npm install -g npm@11.14.1
+  - npm install -g @openai/codex
   # Auto-activate the env on SSH login
   - echo 'source /root/miniconda3/etc/profile.d/conda.sh' >> /root/.bashrc
   - echo 'conda activate opencompass' >> /root/.bashrc
