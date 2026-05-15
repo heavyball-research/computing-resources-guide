@@ -1,9 +1,10 @@
 \documentclass[border=6pt,convert={density=600,outext=.png}]{standalone}
 \usepackage{xcolor}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
+\usepackage[defaultfam,tabular,lining,semibold]{montserrat}
+\renewcommand{\familydefault}{\sfdefault}
 % Modal-logo green (sampled from logo gradient mid-tone)
-\definecolor{modalgreen}{HTML}{2DBA4E}
+\definecolor{modalgreen}{HTML}{4ADE80}
 \begin{document}
 \sffamily\bfseries\Huge
 \color{modalgreen}Modal SSH CLI

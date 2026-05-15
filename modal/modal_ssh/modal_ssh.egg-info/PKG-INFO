@@ -1,7 +1,0 @@
-Metadata-Version: 2.4
-Name: modal-ssh
-Version: 0.1.0
-Summary: Launch Modal GPU dev VMs over SSH, config-driven via YAML.
-Requires-Python: >=3.10
-Requires-Dist: modal>=0.64
-Requires-Dist: pyyaml
