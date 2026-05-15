@@ -1,6 +1,6 @@
 <p align="center">
-  <img src="assets/heavymodal.png" alt="heavymodal" height="90">
-  &nbsp;&nbsp;
+  <!-- <img src="assets/heavymodal.png" alt="heavymodal" height="90"> -->
+  <!-- &nbsp;&nbsp; -->
   <img src="assets/modal_ssh_cli.png" alt="Modal SSH CLI" height="70">
 </p>
 
