@@ -1,0 +1,62 @@
+# Multi-token residual prediction eval (opencompass) environment.
+
+app_name: mrp-eval-ssh
+job_name: mrp-eval
+base_image: nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+add_python: "3.11"
+
+gpu:
+  type: H100
+  count: 8
+
+apt_packages: [openssh-server, git, git-lfs, wget, curl, tmux, vim, build-essential]
+
+# Required for the private SSH-style clone below.
+github_ssh_key: ~/.ssh/id_ed25519_github
+git_repo: git@github.com:heavyball-research/mrp-dev.git
+
+# Bake the local Modal credentials into the image so the VM can run `modal`
+# CLI itself. WARNING: any artifact derived from this image effectively
+# holds your Modal token. Comment out if not needed.
+local_files:
+  ~/.modal.toml: /root/.modal.toml
+
+# Adds eval-side persistence volumes on top of the base HF cache.
+# `eval_opencompass_hf.sh` uses opencompass `work_dir = ./outputs/opencompass/...`
+# and nohup-queue writes to `./logs/eval_opencompass_hf/`, both relative to the
+# repo root, so we mount volumes at those exact in-repo paths.
+volumes:
+  /root/.cache/huggingface: huggingface-cache
+  /root/checkpoints: SDAR-MTD
+  /root/mrp-dev/outputs: mrp-eval-outputs
+  /root/mrp-dev/logs: mrp-eval-logs
+
+run_commands:
+  # git-lfs: register smudge/clean filters, then pull any LFS blobs in the clone.
+  - git lfs install && cd /root/mrp-dev && git lfs pull
+  # Miniconda
+  - wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh
+  - bash /tmp/miniconda.sh -b && rm /tmp/miniconda.sh
+  - /root/miniconda3/bin/conda init bash
+  - /root/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+  - /root/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+  # Env
+  - /root/miniconda3/bin/conda create -n opencompass python=3.10 -y
+  # Torch (cu128)
+  - /root/miniconda3/envs/opencompass/bin/pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 torchaudio==2.7.1+cu128 --index-url https://download.pytorch.org/whl/cu128
+  # flash-attn build prereqs (--no-build-isolation skips pip's isolated build env).
+  - /root/miniconda3/envs/opencompass/bin/pip install psutil packaging ninja wheel setuptools
+  - /root/miniconda3/envs/opencompass/bin/pip install flash-attn==2.8.3 --no-build-isolation
+  # vllm pinned to 0.10.2 with --no-deps so it doesn't drag in transformers>=4.55.2
+  # (the requirements file pins an older transformers). Install BEFORE requirements.txt
+  # so pip sees vllm==0.10.2 as already satisfied and skips re-resolving its deps.
+  - /root/miniconda3/envs/opencompass/bin/pip install --no-deps vllm==0.10.2
+  # Repo eval deps + opencompass editable install (new repo layout).
+  - cd /root/mrp-dev && /root/miniconda3/envs/opencompass/bin/pip install -r src/eval/requirements.txt
+  - cd /root/mrp-dev/src/eval/opencompass && /root/miniconda3/envs/opencompass/bin/pip install -e .
+  # nohup-queue helper
+  - cd /root && git clone https://github.com/Zephyr271828/nohup-queue.git && /root/miniconda3/envs/opencompass/bin/pip install -e /root/nohup-queue
+  # Auto-activate the env on SSH login
+  - echo 'source /root/miniconda3/etc/profile.d/conda.sh' >> /root/.bashrc
+  - echo 'conda activate opencompass' >> /root/.bashrc
+  - echo 'source /root/.bashrc' >> /root/.profile

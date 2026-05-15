@@ -1,0 +1,29 @@
+# sglang dev environment with conda + repo clone baked in.
+# Uses the sglang base image which already has Python; no add_python.
+
+app_name: sglang-ssh
+job_name: sglang
+base_image: lmsysorg/sglang:latest
+
+gpu:
+  type: H100
+  count: 4
+
+# Required for the private SSH-style clone below.
+github_ssh_key: ~/.ssh/id_ed25519_github
+git_repo: git@github.com:heavyball-research/sglang-dev.git
+# Clone dest defaults to /root/sglang-dev.
+
+run_commands:
+  # Miniconda
+  - wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh
+  - bash /tmp/miniconda.sh -b && rm /tmp/miniconda.sh
+  - /root/miniconda3/bin/conda init bash
+  - /root/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+  - /root/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+  # sglang env
+  - /root/miniconda3/bin/conda create -n sglang python=3.12 -y
+  - /root/miniconda3/envs/sglang/bin/pip install sglang
+  - echo 'source /root/miniconda3/etc/profile.d/conda.sh' >> /root/.bashrc
+  - echo 'conda activate sglang' >> /root/.bashrc
+  - echo 'source /root/.bashrc' >> /root/.profile

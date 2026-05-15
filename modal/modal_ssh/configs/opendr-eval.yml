@@ -1,0 +1,46 @@
+# OpenDR-eval evaluation environment.
+
+app_name: opendr-eval-ssh
+job_name: opendr-eval
+base_image: nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+add_python: "3.11"
+
+gpu:
+  type: H100
+  count: 1
+
+apt_packages: [openssh-server, git, git-lfs, wget, curl, tmux, vim, build-essential]
+
+# Required for the private SSH-style clone below.
+github_ssh_key: ~/.ssh/id_ed25519_github
+git_repo: git@github.com:yulinchen99/OpenDR-eval.git
+# Clone dest defaults to /root/OpenDR-eval.
+
+# HF cache + persisted predownloaded benchmark cache + eval results.
+volumes:
+  /root/.cache/huggingface: huggingface-cache
+  /root/OpenDR-eval/cache: opendr-eval-cache
+  /root/OpenDR-eval/results: opendr-eval-results
+
+run_commands:
+  # git-lfs: register smudge/clean filters, then pull any LFS blobs in the clone.
+  - git lfs install && cd /root/OpenDR-eval && git lfs pull
+  # Miniconda
+  - wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh
+  - bash /tmp/miniconda.sh -b && rm /tmp/miniconda.sh
+  - /root/miniconda3/bin/conda init bash
+  - /root/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+  - /root/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+  # Env
+  - /root/miniconda3/bin/conda create -n opendr python=3.11 -y
+  # Repo deps (pure Python — torch/flash-attn intentionally omitted; install
+  # manually inside the VM if you need deploy/search_server.py).
+  - cd /root/OpenDR-eval && /root/miniconda3/envs/opendr/bin/pip install -r requirements.txt
+  # nohup-queue helper
+  - cd /root && git clone https://github.com/Zephyr271828/nohup-queue.git && /root/miniconda3/envs/opendr/bin/pip install -e /root/nohup-queue
+  # Claude Code CLI
+  - curl -fsSL https://claude.ai/install.sh | bash
+  # Auto-activate the env on SSH login
+  - echo 'source /root/miniconda3/etc/profile.d/conda.sh' >> /root/.bashrc
+  - echo 'conda activate opendr' >> /root/.bashrc
+  - echo 'source /root/.bashrc' >> /root/.profile

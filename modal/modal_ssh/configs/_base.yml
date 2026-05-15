@@ -1,0 +1,35 @@
+# Shared defaults — every other config is deep-merged on top of this one.
+# Override anything by redeclaring it in your specific config (lists are
+# replaced wholesale; dicts are deep-merged).
+
+apt_packages: [openssh-server, git, wget, curl, tmux, vim]
+
+# Public keys to inject into /root/.ssh/authorized_keys. Paths are expanded
+# locally; the first key's private counterpart is used in printed ssh
+# commands and in the ~/.ssh/config entry written by the local launcher.
+ssh_public_keys:
+  - ~/.ssh/id_ed25519_modal.pub
+
+# Local SSH private key uploaded to /root/.ssh/id_ed25519_github inside the
+# image so `git clone git@github.com:...` works in the VM. Off by default —
+# uncomment (or set per-config) if your VM needs private-repo access.
+# github_ssh_key: ~/.ssh/id_ed25519_github
+
+duration_hours: 24
+open_vscode: true
+
+# Default GPU spec. Each config is expected to redeclare this explicitly
+# (the value lives here only as a safety net for terse configs).
+gpu:
+  type: H100
+  count: 4
+
+secrets:
+  - huggingface-secret
+
+shell_env:
+  HF_HOME: /root/.cache/huggingface
+  HF_TOKEN: $HF_TOKEN
+
+volumes:
+  /root/.cache/huggingface: huggingface-cache

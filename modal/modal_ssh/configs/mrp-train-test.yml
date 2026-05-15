@@ -1,0 +1,58 @@
+# Isolated personal test environment, modelled on mrp-train.yml but with
+# every identifier deliberately renamed so `modal-ssh down` / `ls` / SSH
+# config never collide with the team's running mrp-ssh / mrp-eval-ssh.
+#
+# What's intentionally DIFFERENT from mrp-train.yml:
+#   - app_name / job_name        → personal namespace
+#   - no github_ssh_key          → avoids the assertion (you don't have that key locally)
+#   - no git_repo                → avoids needing private-repo access at build time;
+#                                  ssh into the VM and clone manually if you want
+#   - no flash-attn / nohup-queue install → cuts ~20min off the first build
+#   - no `cd /root/multi-token-denoising && pip install -r requirements.txt`
+#                                → that step depended on git_repo
+#
+# What's intentionally SHARED with mrp-train:
+#   - same base_image / add_python / conda env name → can run the same scripts
+#   - same HF cache volume          → don't re-download models; safe because read-mostly
+#   - same huggingface-secret       → workspace-wide, no conflict
+#
+# What's intentionally SHARED with _base.yml defaults:
+#   - apt_packages augmented with build-essential
+#   - secrets, shell_env, ssh_public_keys, duration_hours
+
+app_name: mrp-train-test       # was: mrp-ssh
+job_name: mrp-test             # was: mrp  → ssh-config marker becomes `modal-vm-mrp-test`
+
+base_image: nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+add_python: "3.11"
+
+gpu:
+  type: H100
+  count: 4
+
+# build-essential is the only addition vs _base.yml's apt_packages.
+apt_packages: [openssh-server, git, wget, curl, tmux, vim, build-essential]
+
+# Shared HF cache: safe because the cache is read-mostly. If you want
+# fully isolated model downloads, change to e.g. `hf-cache-personal`.
+volumes:
+  /root/.cache/huggingface: huggingface-cache
+
+# Each item is its own shell; use absolute paths instead of `conda activate`.
+run_commands:
+  # Miniconda
+  - wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh
+  - bash /tmp/miniconda.sh -b && rm /tmp/miniconda.sh
+  - /root/miniconda3/bin/conda init bash
+  - /root/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+  - /root/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+  # Env (same name as mrp-train so the same training scripts work)
+  - /root/miniconda3/bin/conda create -n llamafactory_sdar python=3.11 -y
+  # Torch (cu128, same versions as mrp-train)
+  - /root/miniconda3/envs/llamafactory_sdar/bin/pip install torch==2.8.0+cu128 torchvision==0.23.0+cu128 torchaudio==2.8.0+cu128 --index-url https://download.pytorch.org/whl/cu128
+  # flash-attn build prereqs (cheap; the actual flash-attn install is deferred to inside the VM)
+  - /root/miniconda3/envs/llamafactory_sdar/bin/pip install psutil packaging ninja wheel setuptools
+  # Auto-activate env on SSH login
+  - echo 'source /root/miniconda3/etc/profile.d/conda.sh' >> /root/.bashrc
+  - echo 'conda activate llamafactory_sdar' >> /root/.bashrc
+  - echo 'source /root/.bashrc' >> /root/.profile

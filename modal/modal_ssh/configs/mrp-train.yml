@@ -1,0 +1,57 @@
+# Multi-token residual prediction (SDAR) training environment.
+
+app_name: mrp-ssh
+job_name: mrp
+base_image: nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+add_python: "3.11"
+
+gpu:
+  type: H100
+  count: 8
+
+# Adds build-essential + git-lfs on top of the base list (lists are replaced, not merged).
+apt_packages: [openssh-server, git, git-lfs, wget, curl, tmux, vim, build-essential]
+
+# Required for the private SSH-style clone below.
+github_ssh_key: ~/.ssh/id_ed25519_github
+git_repo: git@github.com:heavyball-research/mrp-dev.git
+# Note: clone dest defaults to /root/mrp-dev (derived from the repo name).
+
+# Persisted: HF cache (shared, read-mostly), training checkpoints, and the
+# HF-datasets tokenization cache (first run populates ~19M examples; later
+# runs skip dataset.map entirely).
+volumes:
+  /root/.cache/huggingface: huggingface-cache
+  /root/mrp-dev/checkpoints: mrp-train-checkpoints
+  /root/mrp-dev/src/training/sdar/llama_factory_sdar/tokenized_cache: mrp-train-tokenized-cache
+
+# Runs AFTER git_repo is cloned. Each item is its own shell, so use
+# absolute pip/conda paths instead of `conda activate`.
+run_commands:
+  # git-lfs: register smudge/clean filters, then pull any LFS blobs in the clone.
+  - git lfs install && cd /root/mrp-dev && git lfs pull
+  # Miniconda
+  - wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh
+  - bash /tmp/miniconda.sh -b && rm /tmp/miniconda.sh
+  - /root/miniconda3/bin/conda init bash
+  - /root/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+  - /root/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+  # Env
+  - /root/miniconda3/bin/conda create -n llamafactory_sdar python=3.11 -y
+  # Torch (cu128)
+  - /root/miniconda3/envs/llamafactory_sdar/bin/pip install torch==2.8.0+cu128 torchvision==0.23.0+cu128 torchaudio==2.8.0+cu128 --index-url https://download.pytorch.org/whl/cu128
+  # Repo deps (new layout: requirements live under src/training/sdar)
+  - cd /root/mrp-dev/src/training/sdar && /root/miniconda3/envs/llamafactory_sdar/bin/pip install -r requirements.txt
+  # flash-attn build prereqs
+  - /root/miniconda3/envs/llamafactory_sdar/bin/pip install psutil packaging ninja wheel setuptools
+  - /root/miniconda3/envs/llamafactory_sdar/bin/pip install flash-attn==2.8.3 --no-build-isolation
+  # In-tree llamafactory package (editable) — launcher.py imports `llamafactory.*`
+  - cd /root/mrp-dev/src/training/sdar/llama_factory_sdar && /root/miniconda3/envs/llamafactory_sdar/bin/pip install -e .
+  # Claude Code CLI
+  - curl -fsSL https://claude.ai/install.sh | bash
+  # Auto-activate the env on SSH login
+  - echo 'source /root/miniconda3/etc/profile.d/conda.sh' >> /root/.bashrc
+  - echo 'conda activate llamafactory_sdar' >> /root/.bashrc
+  - echo 'source /root/.bashrc' >> /root/.profile
+  # nohup-queue helper
+  - cd /root && git clone https://github.com/Zephyr271828/nohup-queue.git && /root/miniconda3/envs/llamafactory_sdar/bin/pip install -e /root/nohup-queue

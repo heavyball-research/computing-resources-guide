@@ -1,0 +1,2 @@
+[console_scripts]
+modal-ssh = modal_ssh_cli:main

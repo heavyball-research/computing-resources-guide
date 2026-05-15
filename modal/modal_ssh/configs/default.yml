@@ -1,0 +1,10 @@
+# Minimal SSH-able GPU VM. Inherits everything else from _base.yml.
+
+app_name: ssh-dev
+job_name: dev
+base_image: nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+add_python: "3.11"
+
+gpu:
+  type: H100
+  count: 4

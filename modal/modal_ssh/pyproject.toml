@@ -1,0 +1,19 @@
+[project]
+name = "modal-ssh"
+version = "0.1.0"
+description = "Launch Modal GPU dev VMs over SSH, config-driven via YAML."
+requires-python = ">=3.10"
+dependencies = [
+    "modal>=0.64",
+    "pyyaml",
+]
+
+[project.scripts]
+modal-ssh = "modal_ssh_cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["modal_ssh", "modal_ssh_cli"]
