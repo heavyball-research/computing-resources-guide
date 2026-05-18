@@ -24,6 +24,9 @@ run_commands:
   # sglang env
   - /root/miniconda3/bin/conda create -n sglang python=3.12 -y
   - /root/miniconda3/envs/sglang/bin/pip install sglang
+  # Git identity
+  - git config --global user.email "yx3038@nyu.edu"
+  - git config --global user.name "Yufeng Xu"
   # Node.js + Codex CLI
   - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
   - apt-get install -y nodejs

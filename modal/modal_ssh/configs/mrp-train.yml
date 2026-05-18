@@ -47,6 +47,9 @@ run_commands:
   - /root/miniconda3/envs/llamafactory_sdar/bin/pip install flash-attn==2.8.3 --no-build-isolation
   # In-tree llamafactory package (editable) — launcher.py imports `llamafactory.*`
   - cd /root/mrp-dev/src/training/sdar/llama_factory_sdar && /root/miniconda3/envs/llamafactory_sdar/bin/pip install -e .
+  # Git identity
+  - git config --global user.email "yx3038@nyu.edu"
+  - git config --global user.name "Yufeng Xu"
   # Claude Code CLI
   - curl -fsSL https://claude.ai/install.sh | bash
   # Node.js + Codex CLI

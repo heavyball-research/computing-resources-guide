@@ -54,6 +54,9 @@ run_commands:
   # Repo eval deps + opencompass editable install (new repo layout).
   - cd /root/mrp-dev && /root/miniconda3/envs/opencompass/bin/pip install -r src/eval/requirements.txt
   - cd /root/mrp-dev/src/eval/opencompass && /root/miniconda3/envs/opencompass/bin/pip install -e .
+  # Git identity
+  - git config --global user.email "yx3038@nyu.edu"
+  - git config --global user.name "Yufeng Xu"
   # nohup-queue helper
   - cd /root && git clone https://github.com/Zephyr271828/nohup-queue.git && /root/miniconda3/envs/opencompass/bin/pip install -e /root/nohup-queue
   # Node.js + Codex CLI

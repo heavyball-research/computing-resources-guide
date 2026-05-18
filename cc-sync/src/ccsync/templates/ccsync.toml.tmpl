@@ -1,0 +1,31 @@
+[remote]
+host = "{host}"
+path = "{path}"
+# Optional — set these if `~/.ssh/config` doesn't already resolve them.
+# user = "ubuntu"
+# port = 22
+# identity_file = "~/.ssh/id_ed25519"
+
+[sync]
+exclude = [
+    ".git/",
+    "__pycache__/",
+    ".github/",
+    "target/",
+    ".vscode/",
+    "dev/",
+    "*.ncu-rep",
+    ".venv/",
+    "node_modules/",
+    ".ccsync/",
+]
+debounce_ms = 500
+delete = true
+
+[pull]
+paths = ["logs/", "artifacts/", "outputs/"]
+
+[run]
+tmux_prefix = "ccs"
+log_dir = ".ccsync/logs"
+shell = "bash -lc"

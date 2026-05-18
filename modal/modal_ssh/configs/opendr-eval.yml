@@ -38,6 +38,9 @@ run_commands:
   - cd /root/OpenDR-eval && /root/miniconda3/envs/opendr/bin/pip install -r requirements.txt
   # nohup-queue helper
   - cd /root && git clone https://github.com/Zephyr271828/nohup-queue.git && /root/miniconda3/envs/opendr/bin/pip install -e /root/nohup-queue
+  # Git identity
+  - git config --global user.email "yx3038@nyu.edu"
+  - git config --global user.name "Yufeng Xu"
   # Claude Code CLI
   - curl -fsSL https://claude.ai/install.sh | bash
   # Auto-activate the env on SSH login

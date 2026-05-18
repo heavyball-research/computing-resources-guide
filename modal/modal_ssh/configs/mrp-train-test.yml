@@ -52,6 +52,9 @@ run_commands:
   - /root/miniconda3/envs/llamafactory_sdar/bin/pip install torch==2.8.0+cu128 torchvision==0.23.0+cu128 torchaudio==2.8.0+cu128 --index-url https://download.pytorch.org/whl/cu128
   # flash-attn build prereqs (cheap; the actual flash-attn install is deferred to inside the VM)
   - /root/miniconda3/envs/llamafactory_sdar/bin/pip install psutil packaging ninja wheel setuptools
+  # Git identity
+  - git config --global user.email "yx3038@nyu.edu"
+  - git config --global user.name "Yufeng Xu"
   # Auto-activate env on SSH login
   - echo 'source /root/miniconda3/etc/profile.d/conda.sh' >> /root/.bashrc
   - echo 'conda activate llamafactory_sdar' >> /root/.bashrc
