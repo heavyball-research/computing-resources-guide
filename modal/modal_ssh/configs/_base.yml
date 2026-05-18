@@ -2,7 +2,7 @@
 # Override anything by redeclaring it in your specific config (lists are
 # replaced wholesale; dicts are deep-merged).
 
-apt_packages: [openssh-server, git, wget, curl, tmux, vim]
+apt_packages: [openssh-server, git, wget, curl, tmux, vim, rsync]
 
 # Public keys to inject into /root/.ssh/authorized_keys. Paths are expanded
 # locally; the first key's private counterpart is used in printed ssh

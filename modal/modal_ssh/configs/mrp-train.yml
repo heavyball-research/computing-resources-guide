@@ -10,7 +10,7 @@ gpu:
   count: 8
 
 # Adds build-essential + git-lfs on top of the base list (lists are replaced, not merged).
-apt_packages: [openssh-server, git, git-lfs, wget, curl, tmux, vim, build-essential]
+apt_packages: [openssh-server, git, git-lfs, wget, curl, tmux, vim, rsync, build-essential]
 
 # Required for the private SSH-style clone below.
 github_ssh_key: ~/.ssh/id_ed25519_github
