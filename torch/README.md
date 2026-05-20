@@ -2,7 +2,53 @@
   <img src="assets/torch_header.svg" alt="NYU Torch HPC" height="90">
 </p>
 
-This section 
+This section aims to discuss the special properties of NYU Torch HPC. For general large scale shared HPC guide, see [hpcs](../hpcs/).
+
+## Logging into Torch HPC
+The authentication process of Torch HPC is quite special. Normally you will be prompted to open a Microsoft authentication window, copy and paste a transient auth code, and log in via your NYU account. This can take a lot of time and is very annoying each time you switch to a new working directory. 
+
+Fortunately, [Wenbo Lu](wenboluu.github.io) (a.k.a General LucArthur) has developed a lightweight tool [Ignition](https://github.com/wenboluu/Ignition)that exploits `expect` and master connection so you can log in once and then you can access the Torch HPC without extra authetication for a long period.
+
+If you think this may save your time, plz check the guide in Ignition.
+
+## Projects \& Priority
+The GPU types you can request and the priority of your requests are determined by **account** and **partition**. Of course when a job gets started are also determined by size, timestamp, fairshare, and dependencies.   
+Currently, the Heavyball has been granted 4 accounts:
+- `torch_pr_976_general`: general account, lowest priority.
+- `torch_pr_1030_general`: general account, lowest priority.
+- `torch_pr_1030_tandon_priority`: highest priority, but unable to access H200.
+- `torch_pr_1030_tandon_advanced`: medium priority, able to access H200.
+
+Below is a valid account-partition matrix:
+| Account                         | A100          | H100          | H200                         |
+| ------------------------------- | ------------- | ------------- | ---------------------------- |
+| `torch_pr_1030_general`         | —             | —             | `h200_public` only           |
+| `torch_pr_1030_tandon_advanced` | `a100_tandon` | `h100_tandon` | `h200_public`, `h200_tandon` |
+| `torch_pr_1030_tandon_priority` | `a100_tandon` | `h100_tandon` | `h200_public` only           |
+| `torch_pr_976_general`          | —             | —             | `h200_public` only           |
+
+There are also many partitions we cannot access:
+- `a100_cilvr` → CILVR lab only
+- `a100_cds, h200_cds` → Center for Data Science only
+- `a100_chemistry, h200_courant` → those departments only
+- `h200_bpeher` → a specific PI's allocation
+- `a100, h100, h200, *_plus` → likely require a special QOS or a different allocation account
+
+## Low GPU utilization
+The Slurm system on Torch kills jobs with low GPU utilization. To prevent this during debugging, idle waits, or checkpoint reloads, run [`examples/keep_gpu_busy.py`](examples/keep_gpu_busy.py) alongside your real work — it loops small matmuls to keep `nvidia-smi` reporting ~100% util while using only a few MB of VRAM, leaving the rest free for the actual job.
+
+```bash
+# Cover every GPU in the allocation (one thread per visible device)
+python examples/keep_gpu_busy.py &
+
+# Auto-stop after 1 hour
+python examples/keep_gpu_busy.py --duration 3600 &
+
+# Pin to a specific GPU
+python examples/keep_gpu_busy.py --device 0 &
+```
+
+The script honors `CUDA_VISIBLE_DEVICES`, so on a multi-GPU SLURM allocation it covers every granted GPU without extra flags. Background it (`&`, `nohup`, or a separate `tmux` pane) so it doesn't block your shell.
 
 ## Other resources
 - [Torch HPC website](https://www.nyu.edu/life/information-technology/research-computing-services/high-performance-computing/high-performance-computing-nyu-it.html?challenge=d06e90d7-4d8f-4b88-9d8c-10b73beb60f1)
