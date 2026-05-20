@@ -1,7 +1,7 @@
 <p align="center">
   <img src="assets/nyush-logo.png" alt="NYUSH" height="90">
   &nbsp;&nbsp;
-  <img src="assets/nyush_hpc.svg" alt="NYUSH HPC" height="70">
+  <img src="assets/nyush_hpc.svg" alt="NYUSH HPC" height="80">
 </p>
 
 ## Other resources
