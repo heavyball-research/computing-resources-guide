@@ -98,18 +98,18 @@ DEFAULT_KEY_PATH = Path(str(pubkey_paths[0]).removesuffix(".pub"))
 # ─────────────────────────────────────────────────────────────────────────
 # Single source of truth for git_repo dest
 # ─────────────────────────────────────────────────────────────────────────
-def _resolve_repo(c: dict) -> tuple[str | None, str | None]:
+def _resolve_repo(c: dict) -> tuple[str | None, str | None, str | None]:
     r = c.get("git_repo")
     if not r:
-        return None, None
+        return None, None, None
     if isinstance(r, dict):
-        url, dest = r["url"], r.get("dest")
+        url, dest, branch = r["url"], r.get("dest"), r.get("branch")
     else:
-        url, dest = r, None
-    return url, dest or f"/root/{Path(url.rstrip('/')).name.removesuffix('.git')}"
+        url, dest, branch = r, None, None
+    return url, dest or f"/root/{Path(url.rstrip('/')).name.removesuffix('.git')}", branch
 
 
-REPO_URL, REPO_DEST = _resolve_repo(cfg)
+REPO_URL, REPO_DEST, REPO_BRANCH = _resolve_repo(cfg)
 
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -169,9 +169,10 @@ for local_path, remote_path in (cfg.get("local_files") or {}).items():
 
 # Optional: clone a single git repo into the image at build time.
 if REPO_URL:
+    _branch_flag = f"-b {REPO_BRANCH} " if REPO_BRANCH else ""
     image = image.run_commands(
         f"mkdir -p {os.path.dirname(REPO_DEST)}",
-        f"git clone {REPO_URL} {REPO_DEST}",
+        f"git clone {_branch_flag}{REPO_URL} {REPO_DEST}",
     )
 
 # Extra build-time shell commands.

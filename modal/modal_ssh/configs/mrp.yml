@@ -17,7 +17,9 @@ apt_packages: [openssh-server, git, git-lfs, wget, curl, tmux, vim, rsync, build
 
 # Required for the private SSH-style clone below.
 github_ssh_key: ~/.ssh/id_ed25519_github
-git_repo: git@github.com:heavyball-research/mrp-dev.git
+git_repo:
+  url: git@github.com:heavyball-research/mrp-dev.git
+  branch: dev/yufeng
 
 # Bake the local Modal credentials into the image so the VM can run `modal`
 # CLI itself (needed for eval flows). WARNING: any artifact derived from this
