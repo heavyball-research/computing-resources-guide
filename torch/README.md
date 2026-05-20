@@ -7,7 +7,7 @@ This section aims to discuss the special properties of NYU Torch HPC. For genera
 ## Logging into Torch HPC
 The authentication process of Torch HPC is quite special. Normally you will be prompted to open a Microsoft authentication window, copy and paste a transient auth code, and log in via your NYU account. This can take a lot of time and is very annoying each time you switch to a new working directory. 
 
-Fortunately, [Wenbo Lu](wenboluu.github.io) (a.k.a General LucArthur) has developed a lightweight tool [Ignition](https://github.com/wenboluu/Ignition)that exploits `expect` and master connection so you can log in once and then you can access the Torch HPC without extra authetication for a long period.
+Fortunately, [Wenbo Lu](wenboluu.github.io) (a.k.a General LucArthur) has developed a lightweight tool [Ignition](https://github.com/wenboluu/Ignition) that exploits `expect` and master connection so you can log in once and then you can access the Torch HPC without extra authetication for a long period.
 
 If you think this may save your time, plz check the guide in Ignition.
 
@@ -49,6 +49,9 @@ python examples/keep_gpu_busy.py --device 0 &
 ```
 
 The script honors `CUDA_VISIBLE_DEVICES`, so on a multi-GPU SLURM allocation it covers every granted GPU without extra flags. Background it (`&`, `nohup`, or a separate `tmux` pane) so it doesn't block your shell.
+
+## Torch login node is fragile
+
 
 ## Other resources
 - [Torch HPC website](https://www.nyu.edu/life/information-technology/research-computing-services/high-performance-computing/high-performance-computing-nyu-it.html?challenge=d06e90d7-4d8f-4b88-9d8c-10b73beb60f1)

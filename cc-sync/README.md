@@ -1,4 +1,6 @@
-# cc-sync
+<p align="center">
+  <img src="assets/ccsync_header.svg" alt="cc-sync" height="90">
+</p>
 
 Edit locally, run remotely. A small Python CLI that mirrors your working tree
 to a remote host via `rsync`, manages long-running jobs in `tmux`, and pulls
