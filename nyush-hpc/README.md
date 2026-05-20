@@ -1,4 +1,8 @@
-# NYU Shanghai HPC
+<p align="center">
+  <img src="assets/nyush-logo.png" alt="NYUSH" height="90">
+  &nbsp;&nbsp;
+  <img src="assets/nyush_hpc.svg" alt="NYUSH HPC" height="70">
+</p>
 
 ## Other resources
 - [request general access](https://support.nyu.edu/esc?id=sc_cat_item&table=sc_cat_item&sys_id=7b9e64ce1bd912108ef92f81b24bcb2e&searchTerm=hpc%20shanghai)
