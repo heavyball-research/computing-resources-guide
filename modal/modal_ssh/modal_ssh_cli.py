@@ -16,6 +16,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -290,7 +291,32 @@ def cmd_ssh(args: argparse.Namespace) -> None:
     host_match = re.search(r"Host\s+(\S+)", m.group(1))
     if not host_match:
         sys.exit(f"malformed ssh entry for {marker}")
-    os.execvp("ssh", ["ssh", host_match.group(1)])
+    host_alias = host_match.group(1)
+
+    # Mirror the VSCode-launch behaviour of `modal-ssh up` so re-attaching via
+    # `modal-ssh ssh` also opens the remote folder in VSCode.
+    if cfg.get("open_vscode", True) and not args.no_vscode:
+        if shutil.which("code"):
+            repo = cfg.get("git_repo")
+            if isinstance(repo, dict):
+                url, dest = repo.get("url"), repo.get("dest")
+            else:
+                url, dest = repo, None
+            if dest:
+                remote_dir = dest
+            elif url:
+                remote_dir = f"/root/{Path(url.rstrip('/')).name.removesuffix('.git')}"
+            else:
+                remote_dir = "/root"
+            subprocess.Popen(
+                ["code", "--folder-uri",
+                 f"vscode-remote://ssh-remote+{host_alias}{remote_dir}"]
+            )
+            print(f"→ VSCode opened at {remote_dir}")
+        else:
+            print("(`code` CLI not on PATH — skipping VSCode launch)")
+
+    os.execvp("ssh", ["ssh", host_alias])
 
 
 def cmd_configs(args: argparse.Namespace) -> None:
@@ -349,6 +375,10 @@ def main() -> None:
     p_ssh = sub.add_parser("ssh", help="ssh into a running VM")
     p_ssh.add_argument("config", nargs="?")
     p_ssh.add_argument("--instance", help="connect to a specific instance")
+    p_ssh.add_argument(
+        "--no-vscode", action="store_true",
+        help="don't open VSCode even if open_vscode is true in the config",
+    )
     p_ssh.set_defaults(func=cmd_ssh)
 
     p_run = sub.add_parser("run", parents=[profile_parent], help="submit a bash script as a background job")
