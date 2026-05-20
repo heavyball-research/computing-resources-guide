@@ -1,7 +1,5 @@
 <p align="center">
-  <img src="assets/nyu-logo.png" alt="NYU" height="90">
-  &nbsp;&nbsp;
-  <img src="assets/nyu_torch_hpc.svg" alt="NYU Torch HPC" height="80">
+  <img src="assets/torch_header.svg" alt="NYU Torch HPC" height="90">
 </p>
 
 This section 

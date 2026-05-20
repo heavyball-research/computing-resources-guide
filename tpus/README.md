@@ -1,7 +1,5 @@
 <p align="center">
-  <img src="assets/tpu-logo.png" alt="TPU" height="90">
-  &nbsp;&nbsp;
-  <img src="assets/google_cloud_tpus.svg" alt="Google Cloud TPUs" height="80">
+  <img src="assets/tpus_header.svg" alt="Google Cloud TPUs" height="90">
 </p>
 
 ## Other resources

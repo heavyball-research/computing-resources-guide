@@ -1,7 +1,5 @@
 <p align="center">
-  <img src="assets/modal-logo-icon_1.png" alt="heavymodal" height="90">
-  &nbsp;&nbsp;
-  <img src="assets/modal_ssh_cli.png" alt="Modal SSH CLI" height="70">
+  <img src="assets/modal_header.svg" alt="Modal SSH CLI" height="90">
 </p>
 
 YAML-driven CLI for Modal GPU VMs. Two modes share the same yml + image:
