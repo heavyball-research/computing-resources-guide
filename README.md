@@ -6,7 +6,7 @@ This project provides a comprehensive collection of guidelines to **all** the co
 - [x] Modal
 - [ ] Nous
 - [ ] NYUSH HPC
-- [ ] Torch HPC
+- [x] Torch HPC
 - [ ] TPUs
 
 ## Contributing
