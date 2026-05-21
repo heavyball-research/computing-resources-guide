@@ -132,7 +132,8 @@ As you can see,
 - `$SCRATCH` has the largest space and file count, so that's where most of your code files and data should be stored.
 - `$ARCHIVE` has a large space but very limited file count, so it will be a good place to store large files only (e.g. safetensors).
 
-**Backup \& Flush**
+**Backup \& Flush**  
+
 - `back up` means the files in this area are automatically stored in snapshots at a predefined time interval.
 ```bash
 (base) [yx3038@torch-login-a-0 ~]$ cd .snapshot
@@ -155,7 +156,8 @@ For instance, if you `cd torch.home._2026-05-20_04_00_00_UTC`, you will be able 
 ```
 - `flush` means all the files that you have not accessed for **60 days** will be automatically deleted by the system.
 
-**Symlink Trick**
+**Symlink Trick**  
+
 Sometimes packages simply default to save files in `$HOME` which can easily blow up your storage (e.g. `.claude`, pip cache dir, `CONDA_ENVS_PATH`). Of course it makes sense to manually change the environment variables in `.bashrc`, but an alternative would be using **symlinks**.
 
 For instance, you may simply use `ln -s $SCRATCH/.claude ~/.claude` to redirect the dir that claude code saves the logs. **A caveat** here is that in this case the logs will not be backed up by the snapshots, **since the snapshot only contains the symlink**, not the actual files.
@@ -176,6 +178,7 @@ For `1-4`, fortunately the computing nodes on Torch can reach the external netwo
 Sometimes you may want to run ipython notebook with the computing power on Torch (e.g. a ipynb demo online or your homework). In that case you will need the [Torch OOD service](https://ood.torch.hpc.nyu.edu).
 
 **Configure your environment**
+
 Assume you already have a python environment (in my case, it's a conda env), do the following:
 ```bash
 # step 1: install ipykernel in your conda env
@@ -207,9 +210,11 @@ vim ~/.local/share/jupyter/kernels/<env_name>/kernel.json
 Then you are all set!
 
 **Open an ipython notebook**   
+
 See [here](https://services.rt.nyu.edu/docs/hpc/ood/jupyter_with_conda_singularity/#launch-an-ood-jupyter-notebook).
 
 **Example of successfully built ipykernel**
+
 <p align="center">
   <img src="assets/ipykernel.png" alt="ipykernel" width="900">
 </p>
