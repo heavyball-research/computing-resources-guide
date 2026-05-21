@@ -211,8 +211,9 @@ See [here](https://services.rt.nyu.edu/docs/hpc/ood/jupyter_with_conda_singulari
 
 **Example of successfully built ipykernel**
 <p align="center">
-  <img src="assets/ipykernel.png" alt="ipykernel" width="700">
+  <img src="assets/ipykernel.png" alt="ipykernel" width="900">
 </p>
+
 As you can see we chose the `tiny-llm` kernel and we can use `torch` and `transformers` in the notebook since they are installed in the conda env `tiny-llm`.
 
 ## Other resources
