@@ -206,8 +206,14 @@ vim ~/.local/share/jupyter/kernels/<env_name>/kernel.json
 ```
 Then you are all set!
 
-**Open a ipython notebook**
+**Open an ipython notebook**   
 See [here](https://services.rt.nyu.edu/docs/hpc/ood/jupyter_with_conda_singularity/#launch-an-ood-jupyter-notebook).
+
+**Example of successfully built ipykernel**
+<p align="center">
+  <img src="assets/ipykernel.png" alt="ipykernel" width="700">
+</p>
+As you can see we chose the `tiny-llm` kernel and we can use `torch` and `transformers` in the notebook since they are installed in the conda env `tiny-llm`.
 
 ## Other resources
 - [Torch HPC website](https://www.nyu.edu/life/information-technology/research-computing-services/high-performance-computing/high-performance-computing-nyu-it.html?challenge=d06e90d7-4d8f-4b88-9d8c-10b73beb60f1)
