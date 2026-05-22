@@ -2,7 +2,7 @@
   <img src="assets/hpcs_header.svg" alt="HPC in General" height="90">
 </p>
 
-This section aims to introduce some beginner to advanced topics that are generally applicable to many HPC systems. We would only cover HPC-related topics for now and will not discuss the more general topics that are relevant to operating systems or Linux CLI.
+This section aims to introduce some beginner to advanced topics that are generally applicable to many HPC systems. We would only cover HPC-related topics for now and will not discuss the more general topics such as operating systems or Linux CLI. You may want to check [missing-semester](https://missing.csail.mit.edu/) for these.
 
 ## Contents
 
