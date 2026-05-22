@@ -4,6 +4,19 @@
 
 This section aims to introduce some beginner to advanced topics that are generally applicable to many HPC systems. We would only cover HPC-related topics for now and will not discuss the more general topics that are relevant to operating systems or Linux CLI.
 
+## Contents
+
+- [HPC mental model](#hpc-mental-model)
+- [The Slurm system](#the-slurm-system)
+- [Software stack (modules / conda / pip)](#software-stack-modules--conda--pip)
+- [Sharing files](#sharing-files)
+- [VSCode debugging](#vscode-debugging)
+- [My Config file](#my-config-file)
+- [Quick login](#quick-login)
+- [Connecting computing nodes to the internet](#connecting-computing-nodes-to-the-internet)
+- [Port forwarding for local websites](#port-forwarding-for-local-websites)
+- [Other resources](#other-resources)
+
 ## HPC mental model
 
 An HPC cluster is not "a bigger Linux box" — it's a shared, scheduled, multi-machine system. The diagram below shows the pieces and who owns what:
