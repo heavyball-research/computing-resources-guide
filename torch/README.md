@@ -226,5 +226,6 @@ As you can see we chose the `tiny-llm` kernel and we can use `torch` and `transf
 - [Torch HPC docs](https://services.rt.nyu.edu/docs/hpc/getting_started/intro/)
 - [Torch HPC projects](https://projects.hpc.nyu.edu/project)
 - [Torch Open OnDemand](https://ood.torch.hpc.nyu.edu)
+- [Torch System status](https://stats.apps.cloud.rt.nyu.edu)
 - [Torch HPC cheatsheet](https://github.com/RicercarG/NYU-Torch-HPC-Cheatsheet)
 - [Ignition](https://github.com/wenboluu/Ignition)

@@ -286,7 +286,7 @@ I wrote a small tool, **[Ignition-sh](https://github.com/wenboluu/Ignition)**, t
 
 ## Connecting computing nodes to the internet
 
-On many HPCs (NYU Greene, NYUSH HPC, etc.) compute nodes have **no outbound internet** — only the login node does. This is deliberate firewalling, so the intended workflow is to pre-stage datasets, models, and `pip` installs on the login node, then run the job.
+On many HPCs (NYUSH HPC, etc.) compute nodes have **no outbound internet** — only the login node does. This is deliberate firewalling, so the intended workflow is to pre-stage datasets, models, and `pip` installs on the login node, then run the job.
 
 If you really do need internet on a compute node(e.g. `huggingface` model / dataset downloads mid-run, live `wandb` logging, or a quick `pip install`), the trick is to tunnel its traffic through the login node via an SSH SOCKS proxy. 
 
