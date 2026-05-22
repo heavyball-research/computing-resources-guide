@@ -63,7 +63,7 @@ Slurm is the scheduler that hands out compute nodes. You describe a job (CPUs, m
 
 **Interactive mode**
 
-`srun --pty bash` (or the `gpu` / `cpu` helpers in [my .bashrc](./.bashrc)) gives you a live shell on a compute node. Great for debugging, manual installs, and quick experiments. The shell dies when you disconnect, so wrap it in `tmux` if you want it to survive a network blip.
+`srun --pty bash` (or the `gpu` / `cpu` helpers in [my .bashrc](./examples/.bashrc)) gives you a live shell on a compute node. Great for debugging, manual installs, and quick experiments. The shell dies when you disconnect, so wrap it in `tmux` if you want it to survive a network blip.
 
 ```bash
 gpu 8 64 4 1     # 8 CPUs, 64 GB RAM, 4 hours, 1 GPU
@@ -224,7 +224,7 @@ Then retry Remote-SSH from VSCode; it will reinstall the server cleanly.
 
 ## My Config file
 
-A copy of my personal `~/.bashrc` lives at [`.bashrc`](./.bashrc). It's grouped into five sections of shortcuts I rely on across every HPC I touch:
+A copy of my personal `~/.bashrc` lives at [`examples/.bashrc`](./examples/.bashrc). It's grouped into five sections of shortcuts I rely on across every HPC I touch:
 
 - **General aliases** — `vrc` / `src` to edit & reload bashrc, `lsdu` for per-dir disk usage, `lsfn` for per-dir file counts.
 - **GPU cmds** — `nv` (= `nvidia-smi`), and `nvcl` to `kill -9` every process currently holding a GPU.
