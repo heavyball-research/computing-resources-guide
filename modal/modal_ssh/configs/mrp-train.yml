@@ -19,6 +19,9 @@ git_repo:
   branch: dev/yufeng
 # Note: clone dest defaults to /root/mrp-dev (derived from the repo name).
 
+# Append local ~/.bashrc onto the container's /root/.bashrc.
+bashrc: ~/.bashrc
+
 # Persisted: HF cache (shared, read-mostly), training checkpoints, and the
 # HF-datasets tokenization cache (first run populates ~19M examples; later
 # runs skip dataset.map entirely).

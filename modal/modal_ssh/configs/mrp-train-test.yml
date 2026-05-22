@@ -33,6 +33,9 @@ gpu:
 # build-essential is the only addition vs _base.yml's apt_packages.
 apt_packages: [openssh-server, git, wget, curl, tmux, vim, rsync, build-essential]
 
+# Append local ~/.bashrc onto the container's /root/.bashrc.
+bashrc: ~/.bashrc
+
 # Shared HF cache: safe because the cache is read-mostly. If you want
 # fully isolated model downloads, change to e.g. `hf-cache-personal`.
 volumes:

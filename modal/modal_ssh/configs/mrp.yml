@@ -21,6 +21,9 @@ git_repo:
   url: git@github.com:heavyball-research/mrp-dev.git
   branch: dev/yufeng
 
+# Append local ~/.bashrc onto the container's /root/.bashrc.
+bashrc: ~/.bashrc
+
 # Bake the local Modal credentials into the image so the VM can run `modal`
 # CLI itself (needed for eval flows). WARNING: any artifact derived from this
 # image effectively holds your Modal token.

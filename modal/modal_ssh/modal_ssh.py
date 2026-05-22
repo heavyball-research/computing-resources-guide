@@ -167,6 +167,20 @@ for local_path, remote_path in (cfg.get("local_files") or {}).items():
         assert le.exists(), f"local_files entry not found: {le}"
     image = image.add_local_file(str(le), remote_path, copy=True)
 
+# Optional: append a local .bashrc onto the container's /root/.bashrc.
+# Shipped as /root/.bashrc.user and concatenated at build time so the
+# Ubuntu default (with its non-interactive early-return guard and any
+# conda init lines) stays at the top and user customizations layer on top.
+if cfg.get("bashrc"):
+    bp = Path(cfg["bashrc"]).expanduser()
+    if modal.is_local():
+        assert bp.exists(), f"bashrc not found: {bp}"
+    image = image.add_local_file(str(bp), "/root/.bashrc.user", copy=True)
+    image = image.run_commands(
+        "printf '\\n# --- appended from local bashrc ---\\n' >> /root/.bashrc",
+        "cat /root/.bashrc.user >> /root/.bashrc",
+    )
+
 # Optional: clone a single git repo into the image at build time.
 if REPO_URL:
     _branch_flag = f"-b {REPO_BRANCH} " if REPO_BRANCH else ""

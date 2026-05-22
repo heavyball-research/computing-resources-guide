@@ -16,6 +16,9 @@ github_ssh_key: ~/.ssh/id_ed25519_github
 git_repo: git@github.com:yulinchen99/OpenDR-eval.git
 # Clone dest defaults to /root/OpenDR-eval.
 
+# Append local ~/.bashrc onto the container's /root/.bashrc.
+bashrc: ~/.bashrc
+
 # HF cache + persisted predownloaded benchmark cache + eval results.
 volumes:
   /root/.cache/huggingface: huggingface-cache

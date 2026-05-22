@@ -1,0 +1,13 @@
+\documentclass[border=2pt]{standalone}
+\usepackage{tikz}
+\usepackage{xcolor}
+\usepackage[T1]{fontenc}
+\usepackage[defaultfam,tabular,lining,semibold]{montserrat}
+\renewcommand{\familydefault}{\sfdefault}
+\definecolor{hpcgreen}{HTML}{4FC3A1}
+\begin{document}
+\begin{tikzpicture}
+  \node[anchor=west, inner sep=0] (logo) {\includegraphics[height=2.4cm]{hpc-icon.png}};
+  \node[anchor=west, inner sep=0, xshift=0.25cm] at (logo.east) {\sffamily\bfseries\fontsize{44}{52}\selectfont\color{hpcgreen}HPC in General};
+\end{tikzpicture}
+\end{document}

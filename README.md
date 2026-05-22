@@ -3,10 +3,12 @@
 This project provides a comprehensive collection of guidelines to **all** the computing resources the Heavyball Lab can access.
 
 ## Roadmap
+- [x] HPCs general
 - [x] Modal
 - [ ] Nous
 - [ ] NYUSH HPC
-- [ ] Torch HPC
+- [x] Torch HPC
+- [ ] CC Sync
 - [ ] TPUs
 
 ## Contributing
