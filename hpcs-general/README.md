@@ -91,6 +91,12 @@ gpu 8 64 4 1     # 8 CPUs, 64 GB RAM, 4 hours, 1 GPU
 #SBATCH --dependency=afterok:123456
 #SBATCH --requeue
 
+# sbatch doesn't source ~/.bashrc, so `conda activate` won't work until
+# we source conda.sh ourselves. `conda info --base` keeps this portable
+# across HPCs where the conda install path differs.
+source $(conda info --base)/profile.d/conda.sh
+conda activate <my_env>
+
 python train.py
 ```
 

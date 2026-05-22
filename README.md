@@ -1,6 +1,8 @@
-# Computing Resources Guide
+<p align="center">
+  <img src="assets/repo_header.svg" alt="Computing Resources Guide" height="260">
+</p>
 
-This project provides a comprehensive collection of guidelines to **all** the computing resources the Heavyball Lab can access.
+This project provides a comprehensive collection of guidelines to **all** the computing resources the [Heavyball Lab](https://www.yucheng-lu.me/lab.html)@[NYU Shanghai](https://shanghai.nyu.edu/) can access.
 
 ## Roadmap
 - [x] [HPCs general](./hpcs-general/)

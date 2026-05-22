@@ -1,0 +1,13 @@
+\documentclass[border=2pt]{standalone}
+\usepackage{tikz}
+\usepackage{xcolor}
+\usepackage[T1]{fontenc}
+\usepackage[defaultfam,tabular,lining,semibold]{montserrat}
+\renewcommand{\familydefault}{\sfdefault}
+\definecolor{heavyballorange}{HTML}{E85A2A}
+\begin{document}
+\begin{tikzpicture}
+  \node[anchor=south, inner sep=0] (logo) {\includegraphics[height=6cm]{combined-icon.png}};
+  \node[anchor=north, inner sep=0, yshift=-0.35cm] at (logo.south) {\sffamily\bfseries\fontsize{44}{52}\selectfont\color{heavyballorange}Computing Resources Guide};
+\end{tikzpicture}
+\end{document}
