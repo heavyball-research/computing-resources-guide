@@ -195,6 +195,7 @@ Fix — either drop the stale entry once:
 
 ```bash
 ssh-keygen -R <hostname>     # e.g. ssh-keygen -R greene.hpc.nyu.edu
+clear                        # wipe the scary MITM warning from your scrollback
 ```
 
 …or, for clusters where the key rotates frequently and you don't care to track it, add this to the host block in `~/.ssh/config` so the check is skipped permanently:
