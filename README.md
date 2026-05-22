@@ -6,10 +6,10 @@ This project provides a comprehensive collection of guidelines to **ALL** the co
 
 ## Roadmap
 - [x] [HPCs general](./hpcs-general/)
-- [x] [Modal](./modal/)
-- [x] [Nous cluster](./nous/)
+- [x] [NYU Torch HPC](./torch/)
 - [x] [NYUSH HPC](./nyush-hpc/)
-- [x] [Torch HPC](./torch/)
+- [x] [Nous cluster](./nous/)
+- [x] [Modal](./modal/)
 - [ ] 🚧 [CC Sync](./cc-sync/) 
 - [ ] 🚧 [TPUs](./tpus/) 
 
