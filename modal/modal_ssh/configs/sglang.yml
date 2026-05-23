@@ -17,6 +17,10 @@ git_repo: git@github.com:heavyball-research/sglang-dev.git
 # Append local ~/.bashrc onto the container's /root/.bashrc.
 bashrc: ~/.bashrc
 
+# Persisted checkpoints volume, shared with mrp-train.
+volumes:
+  /root/sglang-dev/checkpoints: mrp-train-checkpoints
+
 run_commands:
   # Miniconda
   - wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh

@@ -51,10 +51,22 @@ class RemoteCfg:
 
 
 @dataclass
+class ComputeCfg:
+    host: str
+    path: str | None = None  # defaults to RemoteCfg.path (shared FS)
+    user: str | None = None
+
+    @property
+    def ssh_target(self) -> str:
+        return f"{self.user}@{self.host}" if self.user else self.host
+
+
+@dataclass
 class SyncCfg:
     exclude: list[str] = field(default_factory=list)
     debounce_ms: int = 500
     delete: bool = True
+    log_pull_interval_s: int = 0  # 0 disables periodic log mirroring in `watch`
 
 
 @dataclass
@@ -76,6 +88,13 @@ class Config:
     sync: SyncCfg
     pull: PullCfg
     run: RunCfg
+    compute: ComputeCfg | None = None
+
+    @property
+    def work_path(self) -> str:
+        if self.compute and self.compute.path:
+            return self.compute.path
+        return self.remote.path
 
 
 def find_config(start: Path | None = None) -> Path:
@@ -112,10 +131,18 @@ def load_config(start: Path | None = None) -> Config:
     pull = PullCfg(**raw.get("pull", {}))
     run = RunCfg(**raw.get("run", {}))
 
+    compute: ComputeCfg | None = None
+    if "compute" in raw:
+        c = raw["compute"]
+        if "host" not in c:
+            raise ValueError(f"{path}: [compute] section requires host")
+        compute = ComputeCfg(host=c["host"], path=c.get("path"), user=c.get("user"))
+
     return Config(
         project_root=path.parent,
         remote=remote,
         sync=sync,
         pull=pull,
         run=run,
+        compute=compute,
     )

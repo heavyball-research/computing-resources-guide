@@ -56,7 +56,7 @@ def test_list_cmd_filters_prefix(cfg):
 
 def test_tail_cmd_follow(cfg):
     cmd = build_tail_cmd(cfg, "train", follow=True)
-    assert "tail -f" in cmd[2]
+    assert "tail -F" in cmd[2]
     assert remote_log_path(cfg, "train") in cmd[2]
 
 

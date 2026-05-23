@@ -47,6 +47,26 @@ def push(cfg: Config, dry_run: bool = False, quiet: bool = False) -> int:
     return proc.returncode
 
 
+def build_logs_mirror_cmd(cfg: Config) -> list[str]:
+    """rsync remote logs/cc-sync/ → local logs/cc-sync/ (same relative path)."""
+    from .remote import LOG_SUBDIR
+    remote = f"{cfg.remote.ssh_target}:{_with_slash(cfg.work_path.rstrip('/') + '/' + LOG_SUBDIR)}"
+    local = cfg.project_root / LOG_SUBDIR
+    local.mkdir(parents=True, exist_ok=True)
+    return [
+        "rsync", "-avh", "-e", cfg.remote.rsync_ssh_arg(),
+        "--include=*.log", "--include=*/", "--exclude=*",
+        remote, _with_slash(str(local)),
+    ]
+
+
+def mirror_logs(cfg: Config, quiet: bool = True) -> int:
+    cmd = build_logs_mirror_cmd(cfg)
+    stdout = subprocess.DEVNULL if quiet else None
+    proc = subprocess.run(cmd, stdout=stdout)
+    return proc.returncode
+
+
 def pull(cfg: Config, paths: list[str] | None = None, quiet: bool = False) -> int:
     cmds = build_pull_cmd(cfg, paths)
     if not cmds:

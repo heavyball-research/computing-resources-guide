@@ -170,6 +170,25 @@ def logs(
         sync_mod.pull(cfg)
 
 
+@app.command("logs-pull")
+def logs_pull(name: str):
+    """Snapshot remote logs/cc-sync/<name>/ to the same local path."""
+    cfg = _cfg()
+    remote_dir = remote_mod.remote_log_dir(cfg, name)
+    dest = cfg.project_root / remote_mod.LOG_SUBDIR / name
+    dest.mkdir(parents=True, exist_ok=True)
+    cmd = [
+        "rsync", "-avh", "-L",  # -L deref the latest.log symlink to a file
+        "-e", cfg.remote.rsync_ssh_arg(),
+        f"{cfg.remote.ssh_target}:{remote_dir}/",
+        f"{dest}/",
+    ]
+    proc = subprocess.run(cmd)
+    if proc.returncode == 0:
+        console.print(f"[green]pulled[/] {dest}/")
+    raise typer.Exit(proc.returncode)
+
+
 @app.command("ps")
 def ps_cmd():
     """List ccs-* tmux sessions on the remote."""

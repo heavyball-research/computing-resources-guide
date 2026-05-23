@@ -10,7 +10,7 @@ from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
 from .config import Config
-from .sync import push
+from .sync import mirror_logs, push
 
 console = Console()
 
@@ -73,11 +73,28 @@ def run_watcher(cfg: Config) -> None:
     observer.schedule(handler, str(cfg.project_root), recursive=True)
     observer.start()
     console.log(f"[green]watching[/] {cfg.project_root} → {cfg.remote.host}:{cfg.remote.path}")
+
+    stop_event = threading.Event()
+    log_thread: threading.Thread | None = None
+    interval = cfg.sync.log_pull_interval_s
+    if interval > 0:
+        def log_loop():
+            while not stop_event.wait(interval):
+                rc = mirror_logs(cfg)
+                if rc != 0:
+                    console.log(f"[red]log mirror exited {rc}[/]")
+        log_thread = threading.Thread(target=log_loop, daemon=True)
+        log_thread.start()
+        console.log(f"[cyan]mirroring remote logs every {interval}s → logs/cc-sync/[/]")
+
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         console.log("[yellow]stopping[/]")
     finally:
+        stop_event.set()
         observer.stop()
         observer.join()
+        if log_thread is not None:
+            log_thread.join(timeout=2)
