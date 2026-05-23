@@ -69,6 +69,15 @@ There are also many partitions we cannot access:
 
 Of course the available projects are subject to changes. You may visit the [torch projects website](https://projects.hpc.nyu.edu/project) to see your available projects.
 
+<details>
+<summary><em>Note</em></summary>
+
+Notably if multiple GPU types are acceptable for your workload (e.g. A100, H100, and H200), consider using `--constraint=a100|h100|h200` insteaf of `--partition=a100_tandon` or `--partition=h200_public`.
+
+Using `--constraint` directly generates multiple queues in different partitions and help you get computing resources faster.
+
+</details>
+
 ## GPU availability
 
 **Total system resources**

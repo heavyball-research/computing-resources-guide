@@ -5,6 +5,14 @@
 
 This is an introduction to the NYU Shanghai HPC
 
+## Contents
+
+- [Accees NYUSH HPC & Access GPUs](#accees-nyush-hpc--access-gpus)
+- [GPU resources](#gpu-resources)
+- [System module versions](#system-module-versions)
+- [Connecting computing nodes to the internet](#connecting-computing-nodes-to-the-internet)
+- [Other resources](#other-resources)
+
 ## Accees NYUSH HPC \& Access GPUs
 
 Surprisingly, the access to NYU Shanghai HPC and NYUSH HPC GPUs are separated:
