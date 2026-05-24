@@ -181,7 +181,11 @@ if cfg.get("bashrc"):
         "cat /root/.bashrc.user >> /root/.bashrc",
     )
 
-# Optional: clone a single git repo into the image at build time.
+# Clone the repo into the image at build time so downstream run_commands can
+# `cd` into it to install deps / editable packages. The cached clone is a
+# point-in-time snapshot, NOT a live mirror — _sync_repo() force-resets the
+# working tree to the latest remote HEAD on every container start so we never
+# run stale code (see launch_ssh / launch_job).
 if REPO_URL:
     _branch_flag = f"-b {REPO_BRANCH} " if REPO_BRANCH else ""
     image = image.run_commands(
@@ -236,6 +240,36 @@ def _wait_for_sshd(host: str, port: int, q: modal.Queue) -> None:
     q.put((host, port))
 
 
+def _sync_repo() -> None:
+    """Force the in-image clone at REPO_DEST to match the latest remote HEAD.
+
+    The image carries a cached clone (point-in-time at image-build) so the
+    build-time `run_commands` can install dependencies against it. But we must
+    NOT serve that stale snapshot to the user — fetch + hard-reset to the
+    remote tip on every container start, discarding any cached working-tree
+    state. Editable installs (`pip install -e`) keep working because the path
+    is unchanged.
+    """
+    if not REPO_URL:
+        return
+    if not os.path.isdir(os.path.join(REPO_DEST, ".git")):
+        # Should not happen (image build clones it), but recover defensively.
+        branch_flag = f"-b {REPO_BRANCH} " if REPO_BRANCH else ""
+        os.makedirs(os.path.dirname(REPO_DEST), exist_ok=True)
+        if os.path.exists(REPO_DEST):
+            shutil.rmtree(REPO_DEST)
+        subprocess.run(f"git clone {branch_flag}{REPO_URL} {REPO_DEST}",
+                       shell=True, check=True)
+        return
+    print(f"[modal-ssh] syncing {REPO_DEST} to latest remote HEAD", flush=True)
+    branch = REPO_BRANCH or subprocess.run(
+        ["git", "-C", REPO_DEST, "rev-parse", "--abbrev-ref", "HEAD"],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    subprocess.run(["git", "-C", REPO_DEST, "fetch", "origin", branch], check=True)
+    subprocess.run(["git", "-C", REPO_DEST, "reset", "--hard", f"origin/{branch}"], check=True)
+
+
 def _write_shell_env(shell_env: dict) -> None:
     """Persist shell_env into .profile and .bashrc so both login and
     non-login shells (e.g. VSCode terminals, bash -lc invocations) see them."""
@@ -252,6 +286,7 @@ def _write_shell_env(shell_env: dict) -> None:
     secrets=[modal.Secret.from_name(s) for s in (cfg.get("secrets") or [])],
 )
 def launch_ssh(q: modal.Queue, shell_env: dict) -> None:
+    _sync_repo()
     _write_shell_env(shell_env)
     with modal.forward(22, unencrypted=True) as tunnel:
         host, port = tunnel.tcp_socket
@@ -274,6 +309,7 @@ def launch_job(script_content: str, shell_env: dict) -> int:
     preamble), which means `conda activate <env>` from .bashrc never runs.
     Instead we source conda.sh + activate explicitly in a wrapper.
     """
+    _sync_repo()
     _write_shell_env(shell_env)
     script_path = "/root/_modal_ssh_job.sh"
     Path(script_path).write_text(script_content)
