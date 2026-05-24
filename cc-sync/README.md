@@ -7,6 +7,8 @@ Edit locally, run remotely. A small Python CLI that mirrors your working tree to
 ## Install
 
 ```bash
+conda create -n cc-sync python=3.12 -y
+conda activate cc-sync
 cd cc-sync
 pip install -e .
 ```
