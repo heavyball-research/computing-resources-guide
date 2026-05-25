@@ -70,11 +70,27 @@ There are also many partitions we cannot access:
 Of course the available projects are subject to changes. You may visit the [torch projects website](https://projects.hpc.nyu.edu/project) to see your available projects.
 
 <details>
-<summary><em>Note</em></summary>
+<summary><em>Tips</em></summary>
 
-Notably if multiple GPU types are acceptable for your workload (e.g. A100, H100, and H200), consider using `--constraint=a100|h100|h200` insteaf of `--partition=a100_tandon` or `--partition=h200_public`.
+**Tip 1: Use `--constraint` when multiple GPU types work**
 
-Using `--constraint` directly generates multiple queues in different partitions and help you get computing resources faster.
+If multiple GPU types are acceptable for your workload (e.g. A100, H100, and H200), consider using `--constraint=a100|h100|h200` instead of locking in `--partition=a100_tandon` or `--partition=h200_public`.
+
+Using `--constraint` directly queues your job across multiple partitions and helps you get computing resources faster.
+
+**Tip 2: Pick the account with the highest `FairShare`**
+
+Check the `sshare` of your accounts and submit jobs under the one with the highest `FairShare`:
+```bash
+Account                    User  RawShares  NormShares    RawUsage  EffectvUsage  FairShare 
+-------------------- ---------- ---------- ----------- ----------- ------------- ---------- 
+torch_pr_1030_general     yx3038          1    0.200000           0      0.000000   0.211717 
+torch_pr_1030_tandon_advanced     yx3038          1    0.200000     2542285      1.000000   0.075536 
+torch_pr_1030_tandon_priority     yx3038          1    0.200000        7643      0.028016   0.150387 
+torch_pr_976_general     yx3038          1    0.333333           0      0.000000   1.000000 
+users                    yx3038          1    0.000172           0      0.000000   1.000000 
+```
+For instance, in the example above, the `FairShare` of `torch_pr_1030_tandon_advanced` has dropped to `0.075536` due to heavy recent usage, whereas `torch_pr_1030_tandon_priority` still sits at `0.150387` — submitting under the latter will get your jobs scheduled sooner.
 
 </details>
 
