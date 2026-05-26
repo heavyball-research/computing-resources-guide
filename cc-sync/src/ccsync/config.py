@@ -72,6 +72,9 @@ class SyncCfg:
 @dataclass
 class PullCfg:
     paths: list[str] = field(default_factory=list)
+    # Interval (seconds) at which `ccsync watch` will pull the configured
+    # paths from remote. 0 disables periodic pulling.
+    interval_s: int = 0
 
 
 @dataclass

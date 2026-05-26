@@ -19,7 +19,8 @@ cc-sync is best for quick testing and debugging, and below are the core commands
 cd my-project
 ccsync init                       # writes .ccsync.toml
 ccsync push                       # one-shot rsync to remote
-ccsync watch                      # auto-sync on every save (Ctrl-C to stop)
+ccsync pull logs/                 # pull a path from remote → local (reverse of push)
+ccsync watch                      # auto-sync (push and pull) on every save (Ctrl-C to stop)
 ```
 
 My typical workflow:
@@ -57,7 +58,7 @@ delete = false
 log_pull_interval_s = 15  # 0 disables; >0 mirrors remote .ccsync/*.log → logs/cc-sync/ during `ccsync watch`
 
 [pull]
-paths = ["logs/", "artifacts/", "outputs/"]
+paths = ["logs/"]
 
 [run]
 tmux_prefix = "ccs"

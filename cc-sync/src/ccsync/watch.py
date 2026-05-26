@@ -10,7 +10,7 @@ from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
 from .config import Config
-from .sync import mirror_logs, push
+from .sync import mirror_logs, pull, push
 
 console = Console()
 
@@ -87,6 +87,24 @@ def run_watcher(cfg: Config) -> None:
         log_thread.start()
         console.log(f"[cyan]mirroring remote logs every {interval}s → logs/cc-sync/[/]")
 
+    # Periodic full pull of [pull].paths from remote (logs/, outputs/, etc.).
+    # Independent of the log mirroring above; configured via [pull].interval_s.
+    pull_thread: threading.Thread | None = None
+    pull_interval = cfg.pull.interval_s
+    pull_paths = list(cfg.pull.paths)
+    if pull_interval > 0 and pull_paths:
+        def pull_loop():
+            while not stop_event.wait(pull_interval):
+                console.log(f"[cyan]pull[/] ({', '.join(pull_paths)})")
+                rc = pull(cfg, quiet=True)
+                if rc != 0:
+                    console.log(f"[red]pull exited {rc}[/]")
+        pull_thread = threading.Thread(target=pull_loop, daemon=True)
+        pull_thread.start()
+        console.log(
+            f"[cyan]pulling {pull_paths} every {pull_interval}s remote → local[/]"
+        )
+
     try:
         while True:
             time.sleep(1)
@@ -98,3 +116,5 @@ def run_watcher(cfg: Config) -> None:
         observer.join()
         if log_thread is not None:
             log_thread.join(timeout=2)
+        if pull_thread is not None:
+            pull_thread.join(timeout=2)
