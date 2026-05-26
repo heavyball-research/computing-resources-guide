@@ -1,62 +1,152 @@
+#!/usr/bin/env python3
 """
-Keep a GPU job alive by sustaining high SM utilization with minimal VRAM.
+Per-GPU CUDA keepalive for training jobs with alternating GPU activity.
 
-Torch HPC kills jobs whose GPU utilization stays low. This loop performs
-small matmuls back-to-back so `nvidia-smi` reports near-100% utilization
-while holding only a few MB of VRAM, leaving the rest free for real work
-running alongside (or for a placeholder job between debugging sessions).
+Runs persistent worker threads that continuously do matrix multiplications.
+The main thread periodically checks nvidia-smi and pauses/resumes workers
+so there are no gaps in GPU utilization from subprocess overhead.
 
-Usage:
-    python keep_gpu_busy.py                 # all visible GPUs, run forever
-    python keep_gpu_busy.py --size 512      # bigger matmuls (still tiny VRAM)
-    python keep_gpu_busy.py --duration 3600 # auto-stop after 1 hour
+Designed for GRPO-style training where learner GPUs and vLLM rollout GPUs
+alternate activity, causing half the GPUs to appear idle at any time.
 """
+
 import argparse
+import subprocess
+import threading
 import time
+import signal
+import sys
+
 import torch
 
 
-def busy_loop(device: torch.device, size: int, dtype: torch.dtype, duration: float | None):
-    a = torch.randn(size, size, device=device, dtype=dtype)
-    b = torch.randn(size, size, device=device, dtype=dtype)
-    c = torch.empty_like(a)
-    start = time.time()
-    iters = 0
-    while True:
-        torch.matmul(a, b, out=c)
-        # Tiny in-place update so the compiler can't constant-fold the loop
-        a.add_(c, alpha=1e-8)
-        iters += 1
-        if iters % 10000 == 0:
-            torch.cuda.synchronize(device)
-            elapsed = time.time() - start
-            print(f"[{device}] {iters} iters in {elapsed:.1f}s ({iters/elapsed:.0f} it/s)", flush=True)
-            if duration is not None and elapsed >= duration:
-                return
+def log(msg: str):
+    ts = time.strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[cuda-keepalive {ts}] {msg}", flush=True)
+
+
+def get_per_gpu_utilization() -> list[int] | None:
+    """Return list of per-GPU utilization % via nvidia-smi."""
+    try:
+        out = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=utilization.gpu",
+             "--format=csv,noheader,nounits"],
+            text=True, timeout=5,
+        )
+        return [int(line.strip()) for line in out.strip().splitlines()]
+    except Exception:
+        return None
+
+
+def allocate_buffers(
+    gpu_ids: list[int], dim: int,
+) -> dict[int, tuple[torch.Tensor, torch.Tensor]]:
+    """Pre-allocate square matrices on each GPU for keepalive matmuls."""
+    buffers = {}
+    for gid in gpu_ids:
+        try:
+            dev = torch.device(f"cuda:{gid}")
+            a = torch.randn(dim, dim, device=dev, dtype=torch.float32)
+            b = torch.randn(dim, dim, device=dev, dtype=torch.float32)
+            buffers[gid] = (a, b)
+            mem_mb = 2 * a.nelement() * a.element_size() / (1024 * 1024)
+            log(f"GPU {gid}: allocated 2x {dim}x{dim} float32 matrices ({mem_mb:.0f} MB)")
+        except Exception as e:
+            log(f"GPU {gid}: cannot allocate buffer ({e}), skipping")
+    return buffers
+
+
+def gpu_worker(
+    gpu_id: int,
+    buffers: dict[int, tuple[torch.Tensor, torch.Tensor]],
+    active: threading.Event,
+    stop: threading.Event,
+):
+    """Persistent worker: matmuls while active is set, sleeps otherwise."""
+    a, b = buffers[gpu_id]
+    while not stop.is_set():
+        if active.is_set():
+            torch.mm(a, b)
+        else:
+            stop.wait(timeout=0.1)
 
 
 def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("--size", type=int, default=256, help="matmul side length (default 256 → ~0.75 MB per matrix in fp32)")
-    p.add_argument("--dtype", choices=["fp32", "fp16", "bf16"], default="fp32")
-    p.add_argument("--duration", type=float, default=None, help="seconds; omit to run until killed")
-    p.add_argument("--device", type=str, default=None, help="cuda index, e.g. 0; default = all visible GPUs")
+    p = argparse.ArgumentParser(description="Per-GPU CUDA keepalive")
+    p.add_argument("--target-util", type=int, default=50,
+                    help="Target GPU utilization %% (default: 50)")
+    p.add_argument("--poll-interval", type=float, default=2.0,
+                    help="Seconds between nvidia-smi checks (default: 2.0)")
+    p.add_argument("--matrix-dim", type=int, default=2000,
+                    help="Dimension of square matrices for keepalive matmuls (default: 2000)")
+    p.add_argument("--gpu-ids", type=str, default=None,
+                    help="Comma-separated GPU IDs to manage (default: all visible)")
+    p.add_argument("--startup-delay", type=int, default=30,
+                    help="Seconds to wait before starting (let training initialize) (default: 30)")
     args = p.parse_args()
 
-    dtype = {"fp32": torch.float32, "fp16": torch.float16, "bf16": torch.bfloat16}[args.dtype]
-    assert torch.cuda.is_available(), "CUDA not available"
+    stop_event = threading.Event()
 
-    devices = [torch.device(f"cuda:{args.device}")] if args.device is not None else \
-              [torch.device(f"cuda:{i}") for i in range(torch.cuda.device_count())]
-    print(f"keeping {len(devices)} GPU(s) busy: size={args.size} dtype={args.dtype}", flush=True)
+    def shutdown(*_):
+        stop_event.set()
+        sys.exit(0)
 
-    if len(devices) == 1:
-        busy_loop(devices[0], args.size, dtype, args.duration)
+    signal.signal(signal.SIGTERM, shutdown)
+    signal.signal(signal.SIGINT, shutdown)
+
+    if args.gpu_ids is not None:
+        gpu_ids = [int(x) for x in args.gpu_ids.split(",")]
     else:
-        import threading
-        threads = [threading.Thread(target=busy_loop, args=(d, args.size, dtype, args.duration), daemon=True) for d in devices]
-        for t in threads: t.start()
-        for t in threads: t.join()
+        n = torch.cuda.device_count()
+        gpu_ids = list(range(n))
+
+    log(f"Managing GPUs: {gpu_ids}")
+    log(f"Target utilization: {args.target_util}%")
+    log(f"Waiting {args.startup_delay}s for training to initialize ...")
+    time.sleep(args.startup_delay)
+
+    buffers = allocate_buffers(gpu_ids, args.matrix_dim)
+    if not buffers:
+        log("No GPU buffers allocated, exiting")
+        sys.exit(1)
+
+    active_flags: dict[int, threading.Event] = {}
+    for gid in gpu_ids:
+        if gid not in buffers:
+            continue
+        flag = threading.Event()
+        flag.set()  # start active
+        active_flags[gid] = flag
+        t = threading.Thread(
+            target=gpu_worker,
+            args=(gid, buffers, flag, stop_event),
+            daemon=True,
+        )
+        t.start()
+
+    log("Keepalive active — all workers running")
+
+    while not stop_event.is_set():
+        time.sleep(args.poll_interval)
+
+        utils = get_per_gpu_utilization()
+        if utils is None:
+            log("Cannot read nvidia-smi, retrying ...")
+            continue
+
+        status = []
+        for gid in gpu_ids:
+            if gid >= len(utils) or gid not in active_flags:
+                continue
+            util = utils[gid]
+            if util >= args.target_util:
+                active_flags[gid].clear()
+                status.append(f"GPU {gid}: {util}% (paused)")
+            else:
+                active_flags[gid].set()
+                status.append(f"GPU {gid}: {util}% (active)")
+
+        log(" | ".join(status))
 
 
 if __name__ == "__main__":
