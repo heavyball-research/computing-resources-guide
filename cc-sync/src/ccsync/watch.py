@@ -10,7 +10,7 @@ from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
 from .config import Config
-from .sync import mirror_logs, pull, push
+from .sync import ensure_remote_log_dir, mirror_logs, pull, push
 
 console = Console()
 
@@ -78,6 +78,10 @@ def run_watcher(cfg: Config) -> None:
     log_thread: threading.Thread | None = None
     interval = cfg.sync.log_pull_interval_s
     if interval > 0:
+        rc = ensure_remote_log_dir(cfg)
+        if rc != 0:
+            console.log(f"[yellow]could not ensure remote {cfg.work_path}/logs/cc-sync (mkdir exited {rc})[/]")
+
         def log_loop():
             while not stop_event.wait(interval):
                 rc = mirror_logs(cfg)

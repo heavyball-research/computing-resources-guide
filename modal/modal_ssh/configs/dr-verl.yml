@@ -1,0 +1,70 @@
+# dr-verl training/SFT environment (minimal uv setup — no vLLM/SGLang rollout).
+
+app_name: dr-verl-ssh
+job_name: dr-verl
+base_image: nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+add_python: "3.12"
+
+gpu:
+  type: H100
+  count: 8
+
+# Adds build-essential + git-lfs on top of the base list (lists are replaced, not merged).
+apt_packages: [openssh-server, git, git-lfs, wget, curl, tmux, vim, rsync, build-essential]
+
+# Required for the private SSH-style clone below.
+github_ssh_key: ~/.ssh/id_ed25519_github
+git_repo:
+  url: git@github.com:BaleChen/dr-verl.git
+  branch: dev/yufeng
+# Note: clone dest defaults to /root/dr-verl (derived from the repo name).
+
+# Append local ~/.bashrc onto the container's /root/.bashrc.
+bashrc: ~/.bashrc
+
+# Persisted: HF cache (shared), plus datasets/ and checkpoints/ in the proj dir.
+volumes:
+  /root/.cache/huggingface: huggingface-cache
+  /root/dr-verl/datasets: dr-verl-datasets
+  /root/dr-verl/checkpoints: dr-verl-checkpoints
+
+# Runs AFTER git_repo is cloned. Each item is its own shell, so reference uv by
+# absolute path and `cd` into the repo (uv auto-detects ./.venv as the target).
+run_commands:
+  # git-lfs: register smudge/clean filters, then pull any LFS blobs in the clone.
+  - git lfs install && cd /root/dr-verl && git lfs pull
+  # uv
+  - curl -LsSf https://astral.sh/uv/install.sh | sh
+  # Create the project venv (Python 3.12) at /root/dr-verl/.venv
+  - cd /root/dr-verl && /root/.local/bin/uv venv --python 3.12
+  # Tooling + repo install (uv pip auto-targets ./.venv)
+  - cd /root/dr-verl && /root/.local/bin/uv pip install pre-commit hydra-core
+  - cd /root/dr-verl && /root/.local/bin/uv pip install -e ".[test]"
+  # cachetools installed explicitly: the trainer imports it but it is not
+  # declared in the package metadata or requirements.txt.
+  - cd /root/dr-verl && /root/.local/bin/uv pip install -r requirements.txt cachetools
+  # flash-attn (prebuilt wheel — avoids the long source build).
+  - cd /root/dr-verl && /root/.local/bin/uv pip install "https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.9.17/flash_attn-2.8.3+cu130torch2.12-cp312-cp312-linux_x86_64.whl"
+  # causal-conv1d (Mamba/SSM conv kernel).
+  - cd /root/dr-verl && /root/.local/bin/uv pip install causal-conv1d
+  # flash-linear-attention.
+  - cd /root/dr-verl && /root/.local/bin/uv pip install flash-linear-attention
+  # tilelang.
+  - cd /root/dr-verl && /root/.local/bin/uv pip install tilelang
+  # Git checkout — install the pre-commit hooks.
+  - cd /root/dr-verl && /root/dr-verl/.venv/bin/pre-commit install
+  # Git identity
+  - git config --global user.email "yx3038@nyu.edu"
+  - git config --global user.name "Yufeng Xu"
+  # Claude Code CLI
+  - curl -fsSL https://claude.ai/install.sh | bash
+  # Node.js + Codex CLI
+  - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+  - apt-get install -y nodejs
+  - npm install -g npm@11.14.1
+  - npm install -g @openai/codex
+  # nohup-queue helper (uv venv is pip-less, so install via uv pip into ./.venv)
+  - git clone https://github.com/Zephyr271828/nohup-queue.git /root/nohup-queue && cd /root/dr-verl && /root/.local/bin/uv pip install -e /root/nohup-queue
+  # Auto-activate the venv on SSH login
+  - echo 'source /root/dr-verl/.venv/bin/activate' >> /root/.bashrc
+  - echo 'source /root/.bashrc' >> /root/.profile

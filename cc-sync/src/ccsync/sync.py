@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shlex
 import subprocess
 from pathlib import Path
 
@@ -42,6 +43,22 @@ def build_pull_cmd(cfg: Config, paths: list[str] | None = None) -> list[list[str
 
 def push(cfg: Config, dry_run: bool = False, quiet: bool = False) -> int:
     cmd = build_push_cmd(cfg, dry_run=dry_run)
+    stdout = subprocess.DEVNULL if quiet else None
+    proc = subprocess.run(cmd, stdout=stdout)
+    return proc.returncode
+
+
+def ensure_remote_log_dir(cfg: Config, quiet: bool = True) -> int:
+    """`mkdir -p` the remote logs/cc-sync/ dir so the mirror has a source.
+
+    The watcher mirrors logs from the remote every interval; if no job has been
+    launched yet the remote dir doesn't exist and rsync's sender aborts with
+    "change_dir ... failed: No such file or directory" (exit 23). Creating it
+    up front makes the mirror a no-op rather than an error on a fresh host.
+    """
+    from .remote import LOG_SUBDIR
+    remote_dir = cfg.work_path.rstrip("/") + "/" + LOG_SUBDIR
+    cmd = cfg.remote.ssh_cmd() + [f"mkdir -p {shlex.quote(remote_dir)}"]
     stdout = subprocess.DEVNULL if quiet else None
     proc = subprocess.run(cmd, stdout=stdout)
     return proc.returncode
