@@ -1,6 +1,6 @@
 # Multi-token residual prediction eval (opencompass) environment.
 
-app_name: mrp-eval-ssh
+app_name: mrp-eval
 job_name: mrp-eval
 base_image: nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
 add_python: "3.11"

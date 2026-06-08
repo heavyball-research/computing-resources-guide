@@ -100,6 +100,8 @@ modal-ssh up sglang --gpu A100:1 --duration 1        # One A100 for 1 hour
 modal-ssh up mrp-train-test --instance a             # Parallel instance mrp-train-test-a
 ```
 
+**Username prefix.** Your local username (`whoami`) is automatically prepended to the Modal app name, so on a shared workspace `modal app list` shows whose VM is whose — e.g. `zephyr` launching `sglang` creates the app `zephyr-sglang`. This is local-side only (the in-container name is unaffected), and `down` / `logs` / `ls` understand the prefixed names automatically. With `--instance a` the full name is `<user>-<base>-a`. Opt out per-config with `prefix_username: false` in the yml. (The SSH alias / `job_name` is **not** prefixed — `modal-ssh ssh sglang` is unchanged.)
+
 ### `modal-ssh ssh <config> [--instance ID]`
 
 Looks up the host written by the last `up` via the marker `modal-vm-<job_name>[-<instance>]` in `~/.ssh/config`, then runs `exec ssh <host>`. **Does not start a new VM** — the VM must already be running. Equivalent to typing `ssh <host>` locally.
@@ -115,7 +117,7 @@ Stop the VM for the specified yml.
 
 | Usage | Behavior |
 |---|---|
-| `modal-ssh down sglang` | Stop all live instances where `app_name == "sglang-ssh"` (no `--instance` suffix) |
+| `modal-ssh down sglang` | Stop all live instances where `app_name == "<user>-sglang"` (no `--instance` suffix) |
 | `modal-ssh down mrp-train-test --instance b` | Stop only `mrp-train-test-b` |
 | `modal-ssh down mrp-train-test --all` | Stop base + all `-X`-suffixed instances |
 
@@ -127,12 +129,12 @@ modal-ssh down mrp-train-test --all
 
 ### `modal-ssh ls`
 
-Shows **live apps started by this CLI** — filtered by `app_name` declared in `configs/*.yml`.
+Shows **live apps started by this CLI** — filtered by `app_name` declared in `configs/*.yml`. Lists **every user's** VMs (matched by base name regardless of the username prefix), so you can see who's using GPUs; the username is right there in the name column.
 
 ```
-ap-XXXX...   sglang-ssh         ephemeral (detached)  running
-ap-YYYY...   mrp-train-test-a   ephemeral (detached)  running
-ap-ZZZZ...   mrp-train-test-b   ephemeral (detached)  zombie (no container)
+ap-XXXX...   zephyr-sglang             ephemeral (detached)  running
+ap-YYYY...   zephyr-mrp-train-test-a   ephemeral (detached)  running
+ap-ZZZZ...   alice-mrp-train-test-b    ephemeral (detached)  zombie (no container)
 ```
 
 - **running** = container is active

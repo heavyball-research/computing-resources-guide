@@ -15,6 +15,7 @@ Designed for `modal run --detach`. Prefer invoking via the `modal-ssh` CLI:
 """
 from __future__ import annotations
 
+import getpass
 import os
 import re
 import shutil
@@ -51,6 +52,23 @@ def _load_config(path: str) -> dict:
     return cfg
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# Username prefix (kept identical in modal_ssh_cli.py — see that file)
+# ─────────────────────────────────────────────────────────────────────────
+def _user_slug() -> str:
+    """The launching machine's username (whoami), lowercased and sanitized
+    for a Modal app-name prefix: runs of non-alphanumerics collapse to a
+    single dash. Empty string if nothing survives sanitization."""
+    raw = (getpass.getuser() or "").lower()
+    return re.sub(r"[^a-z0-9]+", "-", raw).strip("-")
+
+
+def _prefix_user(name: str) -> str:
+    """Prepend `<user>-` to a Modal app name; no-op if the slug is empty."""
+    slug = _user_slug()
+    return f"{slug}-{name}" if slug else name
+
+
 CONFIG_PATH = os.environ.get("CONFIG", str(Path(__file__).parent / "configs" / "default.yml"))
 cfg = _load_config(CONFIG_PATH)
 
@@ -68,6 +86,17 @@ if (d := os.environ.get("MODAL_SSH_DURATION")):
 if (inst := os.environ.get("MODAL_SSH_INSTANCE", "").strip()):
     cfg["app_name"] = f"{cfg['app_name']}-{inst}"
     cfg["job_name"] = f"{cfg['job_name']}-{inst}"
+
+# User prefix: prepend the launching machine's username (whoami) to app_name
+# so a shared Modal workspace can tell whose VM is whose in `modal app list`
+# and `modal-ssh ls`. Local-side only — inside the container `whoami` is
+# `root`, so we guard on modal.is_local(); like the instance suffix above, the
+# container re-import simply recomputes the un-prefixed base name and Modal
+# still resolves the function by app ID. The CLI's down/logs/ls apply the
+# identical prefix so they keep targeting the app that `up` created.
+# Opt out per-config with `prefix_username: false`.
+if modal.is_local() and cfg.get("prefix_username", True):
+    cfg["app_name"] = _prefix_user(cfg["app_name"])
 
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -493,7 +522,8 @@ def _run_job_mode() -> None:
     print(f"App:  {app.name}")
 
     launch_job.spawn(script_content, cfg.get("shell_env") or {})
+    cfg_name = Path(CONFIG_PATH).stem
     print("→ job submitted (detached). Useful next steps:")
-    print(f"    modal-ssh logs   {cfg['app_name']}")
+    print(f"    modal-ssh logs   {cfg_name}")
     print(f"    modal-ssh ls")
-    print(f"    modal-ssh down   {cfg['app_name']}")
+    print(f"    modal-ssh down   {cfg_name}")

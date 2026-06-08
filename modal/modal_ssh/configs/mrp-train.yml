@@ -1,6 +1,6 @@
 # Multi-token residual prediction (SDAR) training environment.
 
-app_name: mrp-ssh
+app_name: mrp
 job_name: mrp
 base_image: nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
 add_python: "3.11"

@@ -1,6 +1,6 @@
 # dr-verl training/SFT environment (minimal uv setup — no vLLM/SGLang rollout).
 
-app_name: dr-verl-ssh
+app_name: dr-verl
 job_name: dr-verl
 base_image: nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
 add_python: "3.12"

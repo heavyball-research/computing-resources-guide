@@ -4,7 +4,7 @@
 #   - opencompass       (py3.10, torch 2.7.1+cu128) for eval
 # SSH login auto-activates llamafactory_sdar; switch with `conda activate opencompass`.
 
-app_name: mrp-ssh
+app_name: mrp
 job_name: mrp
 base_image: nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
 add_python: "3.11"

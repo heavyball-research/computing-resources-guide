@@ -13,6 +13,7 @@ like `sglang.yml`, or a full path. Omit to use `configs/default.yml`.
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import os
 import re
@@ -58,6 +59,28 @@ def _apply_profile(profile: str | None) -> None:
 
 def _apply_instance(name: str, instance: str | None) -> str:
     return f"{name}-{instance}" if instance else name
+
+
+# Keep _user_slug / _prefix_user byte-for-byte in sync with modal_ssh.py — the
+# CLI must reproduce the exact app name that `up` created so down/logs target
+# it, and so ls can recognise it.
+def _user_slug() -> str:
+    """The launching machine's username (whoami), lowercased and sanitized
+    for a Modal app-name prefix: runs of non-alphanumerics collapse to a
+    single dash. Empty string if nothing survives sanitization."""
+    raw = (getpass.getuser() or "").lower()
+    return re.sub(r"[^a-z0-9]+", "-", raw).strip("-")
+
+
+def _prefix_user(name: str) -> str:
+    """Prepend `<user>-` to a Modal app name; no-op if the slug is empty."""
+    slug = _user_slug()
+    return f"{slug}-{name}" if slug else name
+
+
+def _apply_user_prefix(name: str, cfg: dict) -> str:
+    """Apply the username prefix unless the config opted out."""
+    return _prefix_user(name) if cfg.get("prefix_username", True) else name
 
 
 def _resolve_cfg(name: str | None) -> Path:
@@ -135,7 +158,7 @@ def cmd_logs(args: argparse.Namespace) -> None:
     if not base_app:
         sys.exit("config has no app_name field")
     inst = _validate_instance(args.instance)
-    target_name = _apply_instance(base_app, inst)
+    target_name = _apply_user_prefix(_apply_instance(base_app, inst), cfg)
 
     # Pick newest live (or recent) app with that name.
     matches = [a for a in _list_apps() if _app_name(a) == target_name]
@@ -184,12 +207,15 @@ def cmd_down(args: argparse.Namespace) -> None:
         sys.exit("--all and --instance are mutually exclusive")
 
     if args.all:
-        # Match the bare base_app AND every `<base>-<suffix>` instance.
+        # Match this user's `<user>-<base>` AND every `<user>-<base>-<suffix>`
+        # instance. The prefix scopes `down --all` to your own VMs, never
+        # someone else's same-named app in a shared workspace.
+        prefixed = _apply_user_prefix(base_app, cfg)
         def match(n: str) -> bool:
-            return n == base_app or n.startswith(f"{base_app}-")
-        scope_desc = f"{base_app} + all instances"
+            return n == prefixed or n.startswith(f"{prefixed}-")
+        scope_desc = f"{prefixed} + all instances"
     else:
-        target = _apply_instance(base_app, inst)
+        target = _apply_user_prefix(_apply_instance(base_app, inst), cfg)
         def match(n: str) -> bool:
             return n == target
         scope_desc = target
@@ -238,11 +264,21 @@ def _our_app_names() -> set[str]:
 
 
 def _is_our_app(name: str, our_base: set[str]) -> bool:
-    """An app is ours if its name equals one of our base app_names OR is a
-    `<base>-<instance>` variant produced by `--instance`."""
-    if name in our_base:
-        return True
-    return any(name.startswith(f"{b}-") for b in our_base)
+    """True if `name` is a modal-ssh app for one of our base app_names, in any
+    of its forms, so `ls` surfaces every user's VMs (and legacy ones):
+        <base>                  legacy / prefix_username: false
+        <base>-<instance>       legacy + --instance
+        <user>-<base>           username prefix
+        <user>-<base>-<instance>username prefix + --instance
+    Matching on the base as a dash-delimited component keeps it robust even if
+    a username itself contains dashes."""
+    for b in our_base:
+        if (name == b
+                or name.startswith(f"{b}-")
+                or name.endswith(f"-{b}")
+                or f"-{b}-" in name):
+            return True
+    return False
 
 
 def cmd_ls(args: argparse.Namespace) -> None:

@@ -1,7 +1,7 @@
 # sglang dev environment with conda + repo clone baked in.
 # Uses the sglang base image which already has Python; no add_python.
 
-app_name: sglang-ssh
+app_name: sglang
 job_name: sglang
 base_image: lmsysorg/sglang:latest
 
@@ -11,11 +11,19 @@ gpu:
 
 # Required for the private SSH-style clone below.
 github_ssh_key: ~/.ssh/id_ed25519_github
-git_repo: git@github.com:heavyball-research/sglang-dev.git
+git_repo: 
+  url: git@github.com:heavyball-research/sglang-dev.git
+  branch: main
 # Clone dest defaults to /root/sglang-dev.
 
 # Append local ~/.bashrc onto the container's /root/.bashrc.
 bashrc: ~/.bashrc
+
+# Bake the local Modal credentials into the image so the VM can run `modal`
+# CLI itself. WARNING: any artifact derived from this image effectively holds
+# your Modal token.
+local_files:
+  ~/.modal.toml: /root/.modal.toml
 
 # Persisted checkpoints volume, shared with mrp-train.
 volumes:
