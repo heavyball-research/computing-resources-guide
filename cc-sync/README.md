@@ -66,6 +66,10 @@ log_dir = ".ccsync/logs"
 shell = "bash -lc"
 ```
 
+## Working with a coding agent
+
+This repo ships a [`CLAUDE.md`](CLAUDE.md) — a short guide that teaches a local coding agent (e.g. Claude Code) how to operate with ccsync: edit locally, push to the remote, hop to a compute node, and launch long-running work in `tmux`. If you use a coding agent on a ccsync-mirrored project, point it at that file (or copy it to your project root) so it knows to run remote work on the remote rather than the laptop.
+
 ## Other commands (still testing)
 Below are some experimental commands we are still testing. They are ready to use but we are still optimizing them for better convenience and robustness.
 ```bash
