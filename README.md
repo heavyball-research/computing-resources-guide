@@ -9,6 +9,7 @@ This project provides a comprehensive collection of guidelines to **ALL** the co
 - [x] [NYU Torch HPC](./torch/)
 - [x] [NYUSH HPC](./nyush-hpc/)
 - [x] [Nous cluster](./nous/)
+- [x] [A800 cluster](./a800-cluster/)
 - [x] [Modal](./modal/)
 - [ ] 🚧 [CC Sync](./cc-sync/) 
 - [ ] 🚧 [TPUs](./tpus/) 

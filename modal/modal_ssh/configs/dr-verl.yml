@@ -2,7 +2,7 @@
 
 app_name: dr-verl
 job_name: dr-verl
-base_image: nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+base_image: nvidia/cuda:13.0.0-cudnn-devel-ubuntu22.04
 add_python: "3.12"
 
 gpu:
@@ -10,7 +10,11 @@ gpu:
   count: 8
 
 # Adds build-essential + git-lfs on top of the base list (lists are replaced, not merged).
-apt_packages: [openssh-server, git, git-lfs, wget, curl, tmux, vim, rsync, build-essential]
+# clang: the `add_python` standalone interpreter's sysconfig hardcodes CC/CXX=clang,
+# so setuptools compiles C/CUDA extensions (causal-conv1d, tilelang, flash-linear-
+# attention) with clang++ — which must exist and satisfy CUDA 13.0's host-compiler
+# check (clang++ >= 7.0, < 21.0; Ubuntu 22.04 ships clang 14).
+apt_packages: [openssh-server, git, git-lfs, wget, curl, tmux, vim, rsync, build-essential, clang]
 
 # Required for the private SSH-style clone below.
 github_ssh_key: ~/.ssh/id_ed25519_github
@@ -22,11 +26,12 @@ git_repo:
 # Append local ~/.bashrc onto the container's /root/.bashrc.
 bashrc: ~/.bashrc
 
-# Persisted: HF cache (shared), plus datasets/ and checkpoints/ in the proj dir.
+# Persisted: HF cache (shared), plus datasets/, checkpoints/ and logs/ in the proj dir.
 volumes:
   /root/.cache/huggingface: huggingface-cache
   /root/dr-verl/datasets: dr-verl-datasets
   /root/dr-verl/checkpoints: dr-verl-checkpoints
+  /root/dr-verl/logs: dr-verl-logs
 
 # Runs AFTER git_repo is cloned. Each item is its own shell, so reference uv by
 # absolute path and `cd` into the repo (uv auto-detects ./.venv as the target).

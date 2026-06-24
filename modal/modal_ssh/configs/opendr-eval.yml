@@ -51,6 +51,24 @@ run_commands:
   - /root/miniconda3/envs/opendr/bin/python -m pip install "https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.9.17/flash_attn-2.8.3+cu130torch2.12-cp311-cp311-linux_x86_64.whl"
   # nohup-queue helper
   - cd /root && git clone https://github.com/Zephyr271828/nohup-queue.git && /root/miniconda3/envs/opendr/bin/pip install -e /root/nohup-queue
+  # --- vLLM serving env -------------------------------------------------------
+  # Separate env so vLLM's bundled torch does NOT clobber the SFT cu130 torch +
+  # flash-attn installed in `opendr` above. Serve models for eval from this env:
+  #   /root/miniconda3/envs/vllm/bin/python -m vllm.entrypoints.openai.api_server \
+  #     --model <path> --data-parallel-size 2 --tool-call-parser qwen3_coder \
+  #     --reasoning-parser qwen3 --enforce-eager ...
+  # Note: hybrid-attention models (Qwen3.5 / Qwen3-Next GDN) JIT-compile their
+  # FlashInfer kernels on first serve (~8 min cold; cached to ~/.cache/flashinfer
+  # afterwards) — that cache is ephemeral, so the first serve on a fresh box is slow.
+  - /root/miniconda3/bin/conda create -n vllm python=3.11 -y
+  - /root/miniconda3/envs/vllm/bin/pip install -U vllm
+  # Eval deps too, so run_eval.py can serve + grade from this one env.
+  - cd /root/OpenDR-eval && /root/miniconda3/envs/vllm/bin/pip install -r requirements.txt
+  # vLLM 0.23's prometheus metrics middleware crashes on starlette 1.x
+  # (AttributeError: '_IncludedRouter' object has no attribute 'path' -> HTTP 500
+  # on every request, incl. /health). Pin fastapi/starlette to the 0.x line LAST,
+  # after the installs above, so nothing re-upgrades them.
+  - /root/miniconda3/envs/vllm/bin/pip install "fastapi<0.116" "starlette<0.42"
   # Git identity
   - git config --global user.email "yx3038@nyu.edu"
   - git config --global user.name "Yufeng Xu"
